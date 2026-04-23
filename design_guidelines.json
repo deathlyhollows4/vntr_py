@@ -1,0 +1,85 @@
+{
+  "theme": "dark",
+  "archetype": "Archetype 5 (Jewel & Luxury) + Archetype 4 (Swiss/Control Room) hybrid",
+  "brand": {
+    "name": "SmartLegal-AI",
+    "company": "EzChip Pvt Limited",
+    "tagline": "Intelligent Contract & Legal Document Analyzer"
+  },
+  "colors": {
+    "background": "#0A0A0C",
+    "surface": "#141316",
+    "surface_hover": "#1C1A20",
+    "border": "#2C2628",
+    "primary": "#E11D48",
+    "primary_hover": "#BE123C",
+    "primary_muted": "rgba(225, 29, 72, 0.15)",
+    "text_primary": "#F8F9FA",
+    "text_secondary": "#A1A1AA",
+    "risk": {
+      "high": "#EF4444",
+      "medium": "#F59E0B",
+      "low": "#10B981"
+    }
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Cormorant Garamond, serif",
+      "weights": ["400", "600"],
+      "usage": "Use for H1, H2, H3, and document titles. Apply tracking-tight for a premium, authoritative legal feel. DO NOT use Inter for headings."
+    },
+    "body": {
+      "font_family": "IBM Plex Sans, sans-serif",
+      "weights": ["300", "400", "500"],
+      "usage": "Use for all dashboard data, standard UI, paragraphs, and labels. Clean and highly legible."
+    },
+    "mono": {
+      "font_family": "IBM Plex Mono, monospace",
+      "weights": ["400"],
+      "usage": "Use for citations, page numbers, risk scores, and clause extraction IDs."
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Dense 'Control Room' grid for dashboard/data views. Optical alignment over strict geometric centering.",
+    "container_padding": "p-6 md:p-8",
+    "card_radius": "rounded-sm md:rounded",
+    "borders": "1px solid #2C2628. Do not use heavy drop shadows; rely on crisp 1px borders and slight background color differences to define hierarchy."
+  },
+  "components": {
+    "buttons": "Solid primary background for main CTA. Transparent with 1px border for secondary. Avoid overly rounded pills; stick to sharp or slightly rounded corners.",
+    "cards": "Subtle 1px border. Background should be #141316. Add hover lift (-translate-y-1) and slight border tint for clickable cards (like document lists).",
+    "upload_zone": "Dashed border using the border color. On hover or drag-over, border should tint to primary (#E11D48) with a soft inner glow.",
+    "chat_panel": "Use glassmorphism (backdrop-blur-md bg-surface/70) for the chat header. Citations should be styled as clickable inline mono tags.",
+    "tables": "Dense rows. No vertical dividers. Left-aligned columns. Hover state highlights the row.",
+    "tabs": "Minimalist underline style. Active tab gets a primary color bottom border, inactive tabs remain muted."
+  },
+  "motion": {
+    "hover": "Subtle translation (-translate-y-[1px]) and border color shift.",
+    "transitions": "transition-all duration-200 ease-in-out"
+  },
+  "media": {
+    "images": {
+      "hero_background": {
+        "url": "https://images.unsplash.com/photo-1769026171169-5082438aadf5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwyfHxkYXJrJTIwYWJzdHJhY3QlMjB0ZXh0dXJlJTIwcmVkfGVufDB8fHx8MTc3Njk4NjQ3MHww&ixlib=rb-4.1.0&q=85",
+        "description": "Dark red textured background for auth screens, empty states, or hero sections with low opacity overlay."
+      },
+      "contract_abstract": {
+        "url": "https://images.pexels.com/photos/7841822/pexels-photo-7841822.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Macro photography of contract text, use for document placeholder or empty states."
+      },
+      "avatar_placeholder": {
+        "url": "https://images.pexels.com/photos/10657877/pexels-photo-10657877.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Professional user avatar placeholder."
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Write all React code in .js / .jsx files, NOT .tsx.",
+    "CRITICAL: All interactive and key informational elements MUST include a data-testid attribute (e.g., data-testid='upload-pdf-button').",
+    "Implement the UI using React, Tailwind CSS, and Shadcn UI.",
+    "Ensure dark mode is standard. Apply the color palette explicitly in Tailwind config.",
+    "Strip generic Shadcn styles to match the premium, sharp-cornered, authoritative aesthetic.",
+    "Implement split-pane layouts for the document viewer (PDF on left, Tabs/Tools on right).",
+    "Use Lucide-react for all icons."
+  ]
+}
