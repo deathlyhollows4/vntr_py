@@ -367,59 +367,77 @@ async def compare_documents(body: CompareIn):
     return {"doc1": {"id": d1["id"], "name": d1["name"]}, "doc2": {"id": d2["id"], "name": d2["name"]}, **parsed}
 
 
-@api.get("/documents/{doc_id}/report")
-async def download_report(doc_id: str):
-    doc = await _load_doc(doc_id)
+def _append_summary_section(docx: DocxDocument, data: dict) -> None:
+    docx.add_heading("Executive Summary", level=1)
+    docx.add_paragraph(data.get("overview", ""))
+    for key in ("parties", "key_obligations", "financials", "highlights", "red_flags"):
+        val = data.get(key)
+        if not val:
+            continue
+        docx.add_heading(key.replace("_", " ").title(), level=2)
+        items = val if isinstance(val, list) else [val]
+        for item in items:
+            docx.add_paragraph(str(item), style="List Bullet")
+    for key in ("effective_date", "term", "governing_law"):
+        if data.get(key):
+            docx.add_paragraph(f"{key.replace('_', ' ').title()}: {data[key]}")
 
-    summary = await db.analyses.find_one({"document_id": doc_id, "type": "summary"}, {"_id": 0})
-    risks = await db.analyses.find_one({"document_id": doc_id, "type": "risks"}, {"_id": 0})
-    clauses = await db.analyses.find_one({"document_id": doc_id, "type": "clauses"}, {"_id": 0})
 
+def _append_risks_section(docx: DocxDocument, risks: list[dict]) -> None:
+    docx.add_heading("Risk Analysis", level=1)
+    for r in risks:
+        docx.add_heading(
+            f"[{r.get('severity', '?')}] {r.get('title', 'Risk')} (Page {r.get('page', '?')})", level=2
+        )
+        for label, key in (("Clause", "clause"), ("Why it matters", "why"), ("Recommendation", "recommendation")):
+            if r.get(key):
+                docx.add_paragraph(f"{label}: {r[key]}")
+
+
+def _append_clauses_section(docx: DocxDocument, categories: list[dict]) -> None:
+    docx.add_heading("Clause Extraction", level=1)
+    for cat in categories:
+        docx.add_heading(cat.get("name", "Category"), level=2)
+        for item in cat.get("items", []):
+            docx.add_paragraph(
+                f"{item.get('title', '')} (Page {item.get('page', '?')}): {item.get('text', '')}",
+                style="List Bullet",
+            )
+
+
+def _build_report(doc: dict, summary: dict | None, risks: dict | None, clauses: dict | None) -> io.BytesIO:
     docx = DocxDocument()
     docx.add_heading("SmartLegal-AI — Contract Analysis Report", level=0)
     docx.add_paragraph(f"Document: {doc['name']}")
     docx.add_paragraph(f"Pages: {doc.get('pages_count', 0)} | Generated: {now_iso()}")
 
-    if summary and summary.get("data"):
-        s = summary["data"]
-        docx.add_heading("Executive Summary", level=1)
-        docx.add_paragraph(s.get("overview", ""))
-        for key in ("parties", "key_obligations", "financials", "highlights", "red_flags"):
-            if s.get(key):
-                docx.add_heading(key.replace("_", " ").title(), level=2)
-                for item in s[key] if isinstance(s[key], list) else [s[key]]:
-                    docx.add_paragraph(str(item), style="List Bullet")
-        for key in ("effective_date", "term", "governing_law"):
-            if s.get(key):
-                docx.add_paragraph(f"{key.replace('_',' ').title()}: {s[key]}")
+    summary_data = (summary or {}).get("data") or {}
+    risks_data = ((risks or {}).get("data") or {}).get("risks") or []
+    clauses_data = ((clauses or {}).get("data") or {}).get("categories") or []
 
-    if risks and risks.get("data", {}).get("risks"):
-        docx.add_heading("Risk Analysis", level=1)
-        for r in risks["data"]["risks"]:
-            docx.add_heading(f"[{r.get('severity','?')}] {r.get('title','Risk')} (Page {r.get('page','?')})", level=2)
-            if r.get("clause"):
-                docx.add_paragraph(f"Clause: {r['clause']}")
-            if r.get("why"):
-                docx.add_paragraph(f"Why it matters: {r['why']}")
-            if r.get("recommendation"):
-                docx.add_paragraph(f"Recommendation: {r['recommendation']}")
-
-    if clauses and clauses.get("data", {}).get("categories"):
-        docx.add_heading("Clause Extraction", level=1)
-        for cat in clauses["data"]["categories"]:
-            docx.add_heading(cat.get("name", "Category"), level=2)
-            for item in cat.get("items", []):
-                docx.add_paragraph(
-                    f"{item.get('title','')} (Page {item.get('page','?')}): {item.get('text','')}",
-                    style="List Bullet",
-                )
-
-    if not (summary or risks or clauses):
+    if summary_data:
+        _append_summary_section(docx, summary_data)
+    if risks_data:
+        _append_risks_section(docx, risks_data)
+    if clauses_data:
+        _append_clauses_section(docx, clauses_data)
+    if not (summary_data or risks_data or clauses_data):
         docx.add_paragraph("Run analyses (Summary / Risks / Clauses) before downloading a full report.")
 
     buf = io.BytesIO()
     docx.save(buf)
     buf.seek(0)
+    return buf
+
+
+@api.get("/documents/{doc_id}/report")
+async def download_report(doc_id: str):
+    doc = await _load_doc(doc_id)
+    summary = await db.analyses.find_one({"document_id": doc_id, "type": "summary"}, {"_id": 0})
+    risks = await db.analyses.find_one({"document_id": doc_id, "type": "risks"}, {"_id": 0})
+    clauses = await db.analyses.find_one({"document_id": doc_id, "type": "clauses"}, {"_id": 0})
+
+    buf = _build_report(doc, summary, risks, clauses)
     safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", doc["name"]).rsplit(".", 1)[0] or "report"
     return StreamingResponse(
         buf,
